@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alquiler de Prendas</title>
+  <meta name="description" content="Control de alquiler de ternos y vestidos: contratos, devoluciones, garantías, mora y deudas.">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M8 3l4 4 4-4 4 3-2 5-2-1v11H8V10l-2 1-2-5z"/><path d="M12 7v5"/></svg>
+        </span>
+        <div>
+          <strong id="brandName">Alquiler de Prendas</strong>
+          <small>Control de alquileres</small>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Secciones">
+        <button class="tab active" data-view="nuevo">Nuevo alquiler</button>
+        <button class="tab" data-view="pendientes">Pendientes <span class="badge" id="badgePend">0</span></button>
+        <button class="tab" data-view="historial">Historial</button>
+        <button class="tab" data-view="ajustes">Ajustes</button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="demo-banner">
+    <strong>Versión demo:</strong> los datos se guardan solo en este navegador. Usa <em>Ajustes → Exportar respaldo</em> para no perderlos.
+  </div>
+
+  <main class="container">
+
+    <!-- ============ NUEVO ALQUILER ============ -->
+    <section class="view active" id="view-nuevo">
+      <form id="formRental" novalidate autocomplete="off">
+        <div class="card">
+          <div class="card-head">
+            <h2>Datos del cliente</h2>
+            <span class="hint">Si el DNI ya existe, se completan sus datos</span>
+          </div>
+          <div class="grid">
+            <label class="field">DNI *
+              <input name="dni" inputmode="numeric" maxlength="8" placeholder="8 dígitos" required>
+            </label>
+            <label class="field">Nombres *
+              <input name="firstName" required>
+            </label>
+            <label class="field">Apellidos *
+              <input name="lastName" required>
+            </label>
+            <label class="field">Teléfono *
+              <input name="phone" inputmode="tel" maxlength="9" placeholder="9 dígitos" required>
+            </label>
+            <label class="field span-2">Dirección *
+              <input name="address" required>
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>Prendas alquiladas</h2>
+            <button type="button" class="btn btn-ghost" id="btnAddItem">+ Agregar prenda</button>
+          </div>
+          <div class="table-wrap">
+            <table class="items-table">
+              <thead>
+                <tr><th class="w-nro">Nro.</th><th class="w-qty">Cantidad</th><th>Descripción</th><th class="w-price">Precio unit.</th><th class="w-amount">Importe</th><th class="w-del"></th></tr>
+              </thead>
+              <tbody id="itemsBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <div class="card-head"><h2>Fechas y garantía</h2></div>
+            <div class="grid">
+              <label class="field">Fecha de alquiler *
+                <input type="date" name="rentDate" required>
+              </label>
+              <label class="field">Fecha límite de entrega *
+                <input type="date" name="dueDate" required>
+              </label>
+              <label class="field">Garantía (seguro) S/ *
+                <input type="number" name="deposit" min="0" step="0.01" value="0" required>
+              </label>
+              <label class="field check">
+                <input type="checkbox" name="dniRetained" checked>
+                El cliente deja su DNI en tienda
+              </label>
+              <label class="field span-2">Comentarios adicionales
+                <textarea name="comments" rows="3" placeholder="Ej.: ajuste de basta, prenda con botón flojo, etc."></textarea>
+              </label>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h2>Pago</h2></div>
+            <dl class="totals">
+              <div><dt>Alquiler</dt><dd id="tRental">S/ 0.00</dd></div>
+              <div><dt>Garantía</dt><dd id="tDeposit">S/ 0.00</dd></div>
+              <div class="total-row"><dt>Total a cobrar</dt><dd id="tTotal">S/ 0.00</dd></div>
+            </dl>
+            <div class="pay-mode">
+              <label><input type="radio" name="payMode" value="total"> Paga todo ahora</label>
+              <label><input type="radio" name="payMode" value="adelanto" checked> Deja adelanto</label>
+              <label><input type="radio" name="payMode" value="nada"> Paga al final</label>
+            </div>
+            <div class="grid">
+              <label class="field">Monto que paga S/
+                <input type="number" name="advance" min="0" step="0.01" value="0">
+              </label>
+              <label class="field">Medio de pago
+                <select name="payMethod"></select>
+              </label>
+            </div>
+            <dl class="totals">
+              <div class="debt-row"><dt>Saldo pendiente</dt><dd id="tBalance">S/ 0.00</dd></div>
+            </dl>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" id="btnClearForm">Limpiar</button>
+          <button type="submit" class="btn btn-primary">Guardar alquiler</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ============ PENDIENTES ============ -->
+    <section class="view" id="view-pendientes">
+      <div class="stats" id="stats"></div>
+      <div class="toolbar">
+        <input type="search" id="pendSearch" placeholder="Buscar por nombre, DNI, teléfono o Nº de contrato">
+        <div class="chips" id="pendChips">
+          <button class="chip active" data-f="devolver">Por devolver</button>
+          <button class="chip" data-f="vencidos">Vencidos</button>
+          <button class="chip" data-f="deuda">Con deuda</button>
+          <button class="chip" data-f="garantia">Garantía / DNI por entregar</button>
+          <button class="chip" data-f="abiertos">Todos abiertos</button>
+        </div>
+      </div>
+      <div class="cards-list" id="pendList"></div>
+    </section>
+
+    <!-- ============ HISTORIAL ============ -->
+    <section class="view" id="view-historial">
+      <div class="toolbar">
+        <input type="search" id="histSearch" placeholder="Buscar por nombre, DNI o Nº de contrato">
+        <div class="toolbar-row">
+          <select id="histStatus">
+            <option value="">Todos los estados</option>
+            <option>Alquilado</option>
+            <option>Devolución parcial</option>
+            <option>Vencido</option>
+            <option>Devuelto con deuda</option>
+            <option>Garantía por devolver</option>
+            <option>DNI por devolver</option>
+            <option>Cerrado</option>
+          </select>
+          <label class="inline">Desde <input type="date" id="histFrom"></label>
+          <label class="inline">Hasta <input type="date" id="histTo"></label>
+        </div>
+      </div>
+      <div class="card no-pad">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Nº</th><th>Fecha</th><th>Cliente</th><th>DNI</th><th>Límite</th><th class="num">Total</th><th class="num">Saldo</th><th>Estado</th></tr>
+            </thead>
+            <tbody id="histBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ AJUSTES ============ -->
+    <section class="view" id="view-ajustes">
+      <div class="two-col">
+        <form class="card" id="formSettings">
+          <div class="card-head"><h2>Datos de la tienda</h2><span class="hint">Aparecen en el PDF</span></div>
+          <div class="grid">
+            <label class="field span-2">Nombre de la tienda
+              <input name="storeName">
+            </label>
+            <label class="field span-2">Dirección
+              <input name="storeAddress">
+            </label>
+            <label class="field">Teléfono / WhatsApp
+              <input name="storePhone">
+            </label>
+            <label class="field">Mora por día de atraso S/
+              <input type="number" name="lateFee" min="0" step="0.01">
+            </label>
+            <label class="field">Días sugeridos para la entrega
+              <input type="number" name="defaultDays" min="0" step="1">
+            </label>
+          </div>
+          <div class="form-actions"><button class="btn btn-primary" type="submit">Guardar ajustes</button></div>
+        </form>
+
+        <div class="card">
+          <div class="card-head"><h2>Respaldo de datos</h2></div>
+          <p class="muted">Los datos viven en este navegador. Exporta un respaldo con frecuencia; puedes importarlo en otra PC o celular.</p>
+          <div class="btn-stack">
+            <button class="btn btn-ghost" id="btnExport">Exportar respaldo (.json)</button>
+            <label class="btn btn-ghost file-btn">Importar respaldo
+              <input type="file" id="fileImport" accept=".json,application/json" hidden>
+            </label>
+            <button class="btn btn-ghost" id="btnSample">Cargar datos de ejemplo</button>
+            <button class="btn btn-danger" id="btnClear">Borrar todos los datos</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="modal" class="modal">
+    <div id="modalBody"></div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
